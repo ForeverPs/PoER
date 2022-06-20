@@ -1,6 +1,6 @@
 # PoER: Potential Energy Ranking for Out-of-distribution Generalization
 
-<img src="https://github.com/ForeverPs/PoER/raw/main/data/PoER.jpg" width="1000px"/>
+<img src="https://github.com/ForeverPs/PoER/raw/master/data/PoER.jpg" width="1000px"/>
 
 ## Datasets
 - MNIST, fashion-MNIST, Omniglot
