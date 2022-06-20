@@ -3,9 +3,7 @@
 <img src="https://github.com/ForeverPs/PoER/raw/master/data/PoER.jpg" width="1000px"/>
 
 ## Datasets
-- MNIST, fashion-MNIST, Omniglot
-- CIFAR-10, CIFAR-100, LSUN, SVHN, TinyImageNet
-- Put the original data in `data` folder.
+- To Do
 
 ## Data Augmentation Scheme
 - To Do
@@ -24,4 +22,4 @@
 - To Do
 
 ## Reference
-- [Deep Residual Learning for Image Recognition](https://openaccess.thecvf.com/content_cvpr_2016/papers/He_Deep_Residual_Learning_CVPR_2016_paper.pdf) (CVPR, 2016)
+- To Do
