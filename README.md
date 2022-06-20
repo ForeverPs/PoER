@@ -9,11 +9,7 @@
 - To Do
 
 ## Architectures
-`currently`
-- Backbone: ResNet34
-- Ranking head and Classification head: MLP
-- Reconstruction head: `ConvTranpose2d`
-- Quantization: `torch.quantize_per_tensor`
+- To Do
 
 ## Pretrained Models
 - To Do
