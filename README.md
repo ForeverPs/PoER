@@ -1,4 +1,4 @@
-# Domain Decorrelation Potential Energy Ranking
+# Domain Decorrelation with Potential Energy Ranking
 
 <img src="https://github.com/ForeverPs/PoER/raw/master/data/PoER.jpg" width="1000px"/>
 
