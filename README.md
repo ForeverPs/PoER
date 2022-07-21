@@ -1,6 +1,10 @@
 # Domain Decorrelation with Potential Energy Ranking
 - submitted to AAAI 2023
 
+Official PyTorch Implementation
+> Sen Pei, Jiaxi Sun, Xin Zhang, Qing Li, Shuo Li
+> <br/> Institute of Automation, Chinese Academy of Sciences
+
 <img src="https://github.com/ForeverPs/PoER/raw/master/data/PoER.jpg" width="1000px"/>
 
 ## Datasets
