@@ -2,146 +2,178 @@ import os
 import tqdm
 import torch
 import shutil
-import numpy as np
-from data import *
-import torch.nn as nn
-from model import PoER
-from torch.optim import Adam
-from eval import get_metric, get_acc
+import argparse
+from eval import get_acc
+from torch import nn, optim
+from model import ResNetCls
+from loss import energy_ranking
+import torch.distributed as dist
+import torch.utils.data.distributed
+from pacs_data import get_dg_dataset
 from tensorboardX import SummaryWriter
-from loss import recon_loss, energy_ranking
-from torch.optim.lr_scheduler import StepLR
-from utils import calculate_pair_potential, calculate_cls_conf, calculate_recon_error
+from torch.utils.data import DataLoader
+from data_transform import get_transform
 
 
-device = torch.device('cuda:5' if torch.cuda.is_available() else 'cpu')
+def main(opt):
+    os.environ['CUDA_VISIBLE_DEVICES'] = opt.gpu_ids
+    if opt.local_rank == 0 and opt.build_tensorboard:
+        shutil.rmtree(opt.logdir, True)
+        writer = SummaryWriter(logdir=opt.logdir)
+        opt.build_tensorboard = False
+    
+    dist.init_process_group(backend='nccl', init_method=opt.init_method, world_size=opt.n_gpus)
 
+    batch_size = opt.batch_size
+    device = torch.device('cuda', opt.local_rank if torch.cuda.is_available() else 'cpu')
+    print('Using device:{}'.format(device))
 
-def train(epochs, batch_size, lr):
-    train_loader, val_loader = cifar10_data_loader(batch_size=batch_size)
-    ood_loader = lsun_data_loader(batch_size=batch_size)
+    train_set, val_set, test_set = get_dg_dataset(train_transform, val_transform, source_domains=opt.source, target_domains=opt.target)
+    train_sampler = torch.utils.data.distributed.DistributedSampler(train_set, shuffle=True)
+    train_loader = DataLoader(train_set, batch_size=batch_size, sampler=train_sampler, num_workers=36)
 
-    # train_loader, val_loader = mnist_data_loader(batch_size=batch_size)
-    # ood_loader, _ = fashion_mnist_data_loader(batch_size=batch_size)
+    val_sampler = torch.utils.data.distributed.DistributedSampler(val_set, shuffle=False)
+    val_loader = DataLoader(val_set, batch_size=batch_size, sampler=val_sampler, num_workers=24)
 
-    model = PoER(in_channel=in_channel, num_classes=num_classes, dropout=0.1, bit=8, latent_dim=32)
-    model = model.to(device)
+    test_sampler = torch.utils.data.distributed.DistributedSampler(test_set, shuffle=False)
+    test_loader = DataLoader(test_set, batch_size=batch_size, sampler=test_sampler, num_workers=24)
+    
+    model = ResNetCls(depth=opt.depth, num_classes=opt.num_classes)
 
-    optimizer = Adam(model.parameters(), lr=lr)
-    scheduler = StepLR(optimizer, step_size=100, gamma=.5)
+    if opt.local_rank == 0:
+        try:
+            model.load_state_dict(torch.load(opt.checkpoint, map_location='cpu'), strict=True)
+        except:
+            print('Training from scratch...')
+
+    model = torch.nn.parallel.DistributedDataParallel(model.to(device), device_ids=[opt.local_rank], output_device=opt.local_rank, broadcast_buffers=False)
+
+    optimizer = optim.AdamW(filter(lambda p: p.requires_grad, model.parameters()), lr=opt.lr)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=opt.poer_set, gamma=0.5)
     criterion = nn.CrossEntropyLoss()
+    
+    for epoch in range(opt.epoch):
+        train_loader.sampler.set_epoch(epoch)
 
-    best_fpr95 = 0.5
-    for epoch in range(epochs):
-        train_loss, train_acc, val_loss, val_acc = 0, 0, 0, 0
+        # only tqdm in rank 0
+        if opt.local_rank == 0:
+            data_loader = tqdm.tqdm(train_loader)
+        else:
+            data_loader = train_loader
+        
+        train_loss, val_loss, test_loss = 0, 0, 0
+        train_acc, val_acc, test_acc = 0, 0, 0
 
         model.train()
-
-        train_feat, train_feat_label = list(), list()  # calculate pair potential energy during inference
-        for x, y in tqdm.tqdm(train_loader):
-            x = x.float().to(device)
-            y = y.long().to(device)
-            ranking, cls, recon = model(x)
-
-            # record for inference
-            train_feat.append(ranking.detach().cpu())
-            train_feat_label.append(y.detach().cpu())
-
-            loss = criterion(cls, y) + ranking_weight * energy_ranking(ranking, y) + recon_weight * recon_loss(recon, x)
-            _, predict_cls = torch.max(cls, dim=-1)
+        for x, y, d in data_loader:
+            x, y, d = x.float().to(device), y.long().to(device), d.long().to(device)
+            feats, predict = model(x)
+            vanilla_loss = criterion(predict, y)
+            if opt.poer:
+                poer_loss = energy_ranking(feats, y, d)
+                poer_weight = 0.1 if epoch < opt.poer_set else 0.2
+                loss = vanilla_loss + poer_weight * poer_loss
+            else:
+                loss = vanilla_loss
 
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
+            train_loss += loss.item()
+            _, predict_cls = torch.max(predict, dim=-1)
+            train_acc += get_acc(predict_cls, y)
 
-            train_loss += loss.item() / len(train_loader)
-            train_acc += get_acc(predict_cls, y) / len(train_loader)
-
-        train_feat = torch.cat(train_feat, dim=0)
-        train_feat_label = torch.cat(train_feat_label, dim=0)
-
+        # update learning rate
         scheduler.step()
 
-        model.eval()
-        id_ood_label, id_ood_score = list(), list()
-        with torch.no_grad():
-            # in distribution data
-            for x, y in tqdm.tqdm(val_loader):
-                x = x.float().to(device)
-                y = y.long().to(device)
-                ranking, cls, recon = model(x)
-                conf = calculate_cls_conf(cls).to(device)
-                dist = calculate_recon_error(recon, x).to(device)
-                potential_energy = calculate_pair_potential(train_feat, train_feat_label, ranking, num_classes).to(device)
-                score = conf - recon_weight * dist - ranking_weight * potential_energy
-                id_ood_label.extend([1] * len(score))
-                id_ood_score.extend(score.detach().cpu().numpy().tolist())
+        if opt.local_rank == 0 and epoch % 2 == 0:
+            model.eval()
+            with torch.no_grad():
+                for x, y, d in tqdm.tqdm(val_loader):
+                    x, y, d = x.float().to(device), y.long().to(device), d.long().to(device)
+                    feats, predict = model(x)
+                    vanilla_loss = criterion(predict, y)
+                    if opt.poer:
+                        poer_loss = energy_ranking(feats, y, d)
+                        poer_weight = 10. if epoch < opt.poer_set else 20.
+                        loss = vanilla_loss + poer_weight * poer_loss
+                    else:
+                        loss = vanilla_loss
 
-                loss = criterion(cls, y) + ranking_weight * energy_ranking(ranking, y) + recon_weight * recon_loss(recon, x)
-                _, predict_cls = torch.max(cls, dim=-1)
-                val_loss += loss.item() / len(val_loader)
-                val_acc += get_acc(predict_cls, y) / len(val_loader)
-            
-            # out of distribution data
-            count = 0
-            for x, y in tqdm.tqdm(ood_loader):
-                count += 1
-                x = x.float().to(device)
-                ranking, cls, recon = model(x)
-                conf = calculate_cls_conf(cls).to(device)
-                dist = calculate_recon_error(recon, x).to(device)
-                potential_energy = calculate_pair_potential(train_feat, train_feat_label, ranking, num_classes).to(device)
-                score = conf - recon_weight * dist - ranking_weight * potential_energy
-                id_ood_label.extend([0] * len(score))
-                id_ood_score.extend(score.detach().cpu().numpy().tolist())
-                if count >= len(val_loader):
-                    break
+                    val_loss += loss.item()
+                    _, predict_cls = torch.max(predict, dim=-1)
+                    val_acc += get_acc(predict_cls, y)
+                
+                for x, y, d in tqdm.tqdm(test_loader):
+                    x, y, d = x.float().to(device), y.long().to(device), d.long().to(device)
+                    feats, predict = model(x)
+                    loss = criterion(predict, y)
+                    test_loss += loss.item()
+                    _, predict_cls = torch.max(predict, dim=-1)
+                    test_acc += get_acc(predict_cls, y)
 
-            auroc, aupr_in, aupr_out, fpr95, thresh95 = get_metric(np.array(id_ood_score), np.array(id_ood_label))
+            train_loss = train_loss / len(train_loader)
+            train_acc = train_acc / len(train_loader)
 
-            if fpr95 < best_fpr95:
-                best_fpr95 = fpr95
-                os.makedirs(save_path, exist_ok=True)
-                model_name = '%s/epoch_%d_fpr95_%.4f.pth' % (save_path, epoch, fpr95)
-                torch.save(model.state_dict(), model_name)
-            
+            val_loss = val_loss / len(val_loader)
+            val_acc = val_acc / len(val_loader)
+
+            test_loss = test_loss / len(test_loader)
+            test_acc = test_acc / len(test_loader)
+
+            print('EPOCH : %03d | Train Loss : %.3f | Train Acc : %.3f | Val Loss : %.3f | Val Acc : %.3f | '
+                  'Test Loss : %.3f | Test Acc : %.3f'
+                % (epoch, train_loss, train_acc, val_loss, val_acc, test_loss, test_acc))
+
+            compare_acc = val_acc - val_loss / poer_weight if opt.poer else val_acc - val_loss
+            if compare_acc >= opt.best_acc and epoch > opt.min_epoch:
+                opt.best_acc = compare_acc
+                model_name = 'epoch_%d_val_%.3f_test_%.3f.pth' % (epoch, val_acc, test_acc)
+                os.makedirs(opt.save_path, exist_ok=True)
+                torch.save(model.module.state_dict(), '%s/%s' % (opt.save_path, model_name))
+
             writer.add_scalar('train/loss', train_loss, epoch)
             writer.add_scalar('train/acc', train_acc, epoch)
 
             writer.add_scalar('val/loss', val_loss, epoch)
             writer.add_scalar('val/acc', val_acc, epoch)
 
-            writer.add_scalar('val/auroc', auroc, epoch)
-            writer.add_scalar('val/aupr_in', aupr_in, epoch)
-            writer.add_scalar('val/aupr_out', aupr_out, epoch)
-            writer.add_scalar('val/fpr95', fpr95, epoch)
-            writer.add_scalar('val/thresh95', thresh95, epoch)
-
-            print('EPOCH : %03d | Train Loss : %.3f | Train Acc : %.3f | Val Loss : %.3f | '
-                  'Val Acc : %.3f | AUROC : %.3f | AUPR In : %.3f | AUPR Out : %.3f | '
-                  'FPR95 : %.3f | Thresh95 : %.3f' % (epoch, train_loss, train_acc, val_loss,
-                   val_acc, auroc, aupr_in, aupr_out, fpr95, thresh95))
-        
+            writer.add_scalar('test/loss', test_loss, epoch)
+            writer.add_scalar('test/acc', test_acc, epoch)
 
 
 if __name__ == '__main__':
-    in_channel = 3
-    num_classes = 10
+    parser = argparse.ArgumentParser('AAAI PoER')
+    parser.add_argument('--local_rank', type=int, default=-1)
+    parser.add_argument('--init_method', default='env://')
+    parser.add_argument('--n_gpus', type=int, default=8)
+    parser.add_argument('--gpu_ids', type=str, default='0,1,2,3,4,5,6,7')
+    parser.add_argument('--build_tensorboard', type=bool, default=True)
 
-    # CIFAR-10 Training
-    save_path = './saved_models/cifar10'
-    logdir = './tensorboard/PoER/cifar10/'
+    parser.add_argument('--epoch', type=int, default=3000)
+    parser.add_argument('--batch_size', type=int, default=128)
+    parser.add_argument('--lr', type=float, default=1e-4)
+    parser.add_argument('--depth', type=int, default=18)
+    parser.add_argument('--size', type=int, default=224)
+    parser.add_argument('--num_classes', type=int, default=7)
+    parser.add_argument('--poer', type=bool, default=True)
+    parser.add_argument('--poer_set', type=int, default=70)
+    parser.add_argument('--min_epoch', type=int, default=10)
+    parser.add_argument('--best_acc', type=float, default=-10)
+    parser.add_argument('--source', type=list, default=['photo', 'art_painting', 'cartoon'])
+    parser.add_argument('--target', type=list, default=['sketch'])
+    parser.add_argument('--logdir', type=str, default='./tensorboard/res18_poer/sketch/res18_224_run0')
+    parser.add_argument('--save_path', type=str, default='./saved_models/res18_poer/sketch/res18_224_run0')
+    parser.add_argument('--checkpoint', type=str, default=None)
 
-    # MNIST Training 
-    # save_path = './saved_models/mnist'
-    # logdir = './tensorboard/PoER/mnist/'
+    opt = parser.parse_args()
+    if opt.local_rank == 0:
+        print('opt:', opt)
+    
+    # data augmentation
+    train_transform, val_transform = get_transform(size=opt.size)
+    main(opt)
 
-    shutil.rmtree(logdir, True)
-    writer = SummaryWriter(logdir=logdir)
 
-    lr = 1e-3
-    epochs = 1000
-    batch_size = 128
-    recon_weight = 1
-    ranking_weight = 1
-    train(epochs, batch_size, lr)
+# using following script to train the model
+# python -m torch.distributed.launch --nproc_per_node=8 train.py --n_gpus=8
