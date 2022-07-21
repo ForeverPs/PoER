@@ -95,7 +95,7 @@ def main(opt):
                     vanilla_loss = criterion(predict, y)
                     if opt.poer:
                         poer_loss = energy_ranking(feats, y, d)
-                        poer_weight = 10. if epoch < opt.poer_set else 20.
+                        poer_weight = 0.1 if epoch < opt.poer_set else 0.2
                         loss = vanilla_loss + poer_weight * poer_loss
                     else:
                         loss = vanilla_loss
