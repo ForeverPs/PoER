@@ -1,5 +1,5 @@
 # Domain Decorrelation with Potential Energy Ranking
-- submitted to ***I 2023
+- submitted to AAAI 2023
 
 <img src="https://github.com/ForeverPs/PoER/raw/master/data/PoER.jpg" width="1000px"/>
 
