@@ -4,7 +4,7 @@
 <img src="https://github.com/ForeverPs/PoER/raw/master/data/PoER.jpg" width="1000px"/>
 
 Official PyTorch Implementation
-> Sen Pei, Jiaxi Sun, Xin Zhang, Qing Li, Shuo Li
+> Sen Pei, Jiaxi Sun
 > <br/> Institute of Automation, Chinese Academy of Sciences
 
 ## Datasets
