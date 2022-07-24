@@ -29,7 +29,7 @@ Official PyTorch Implementation
 - `python -m torch.distributed.launch --nproc_per_node=8 train.py --n_gpus=8`
 
 ## Metrics
-<img src="https://github.com/ForeverPs/PoER/raw/master/data/result.png" width="500px"/>
+<img src="https://github.com/ForeverPs/PoER/raw/master/data/pacs_result.png" width="500px"/>
 
 ## Reference
 - [Deep Residual Learning for Image Recognition](https://openaccess.thecvf.com/content_cvpr_2016/papers/He_Deep_Residual_Learning_CVPR_2016_paper.pdf) (CVPR, 2016)
