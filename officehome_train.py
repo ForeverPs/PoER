@@ -125,7 +125,7 @@ def main(opt):
                   'Test Loss : %.4f | Test Acc : %.4f'
                 % (epoch, train_loss, train_acc, val_loss, val_acc, test_loss, test_acc))
 
-            compare_acc = val_acc - val_loss / poer_weight if opt.poer else val_acc - val_loss
+            compare_acc = val_acc - val_loss
             if compare_acc >= opt.best_acc and epoch > opt.min_epoch:
                 opt.best_acc = compare_acc
                 model_name = 'epoch_%d_val_%.3f_test_%.3f.pth' % (epoch, val_acc, test_acc)
