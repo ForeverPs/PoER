@@ -13,7 +13,7 @@ Official PyTorch Implementation
 - OfficeHome: Artistic, Clipart, Product, Real World
 - Digits-DG: MNIST, MNIST-M, SVHN, SYN
 - NICO: 19 classes belonging to 65 domains
-- download here: link
+- download here: [Baidu Disk (ql18)](https://pan.baidu.com/s/1-_3zqCId87_JXaMyTaeaQw)
 
 ## Data Augmentation Scheme
 - RandomResizedCrop
