@@ -9,8 +9,11 @@ Official PyTorch Implementation
 
 ## Datasets
 - PACS: photo, art painting, cartoon, sketch
-- put the dataset in `data/PACS/` folder 
-- we provide data split in `data/PACS/datalist/`
+- VLCS: Pascal VOC, LabelMe, Caltech, SUN09
+- OfficeHome: Artistic, Clipart, Product, Real World
+- Digits-DG: MNIST, MNIST-M, SVHN, SYN
+- NICO: 19 classes belonging to 65 domains
+- download here: link
 
 ## Data Augmentation Scheme
 - RandomResizedCrop
@@ -26,7 +29,11 @@ Official PyTorch Implementation
 - ImageNet Pre-trained models
 
 ## Training
-- `python -m torch.distributed.launch --nproc_per_node=8 train.py --n_gpus=8`
+- `python -m torch.distributed.launch --nproc_per_node=8 pacs_train.py --n_gpus=8`
+- `python -m torch.distributed.launch --nproc_per_node=8 vlcs_train.py --n_gpus=8`
+- `python -m torch.distributed.launch --nproc_per_node=8 nico_train.py --n_gpus=8`
+- `python -m torch.distributed.launch --nproc_per_node=8 digits_train.py --n_gpus=8`
+- `python -m torch.distributed.launch --nproc_per_node=8 officehome_train.py --n_gpus=8`
 
 ## Metrics
 <img src="https://github.com/ForeverPs/PoER/raw/master/data/pacs_result.png" width="500px"/>
