@@ -9,7 +9,7 @@ from model import ResNetCls
 from loss import energy_ranking
 import torch.distributed as dist
 import torch.utils.data.distributed
-from pacs_data import get_dg_dataset
+from vlcs_data import get_dg_dataset
 from tensorboardX import SummaryWriter
 from torch.utils.data import DataLoader
 from data_transform import get_transform
@@ -38,7 +38,7 @@ def main(opt):
     test_sampler = torch.utils.data.distributed.DistributedSampler(test_set, shuffle=False)
     test_loader = DataLoader(test_set, batch_size=batch_size, sampler=test_sampler, num_workers=24)
     
-    model = ResNetCls(depth=opt.depth, num_classes=opt.num_classes)
+    model = ResNetCls(depth=opt.depth, num_classes=opt.num_classes, pretrained=opt.pretrained, num_prototypes=opt.num_prototypes)
 
     if opt.local_rank == 0:
         try:
@@ -121,14 +121,14 @@ def main(opt):
             test_loss = test_loss / len(test_loader)
             test_acc = test_acc / len(test_loader)
 
-            print('EPOCH : %03d | Train Loss : %.3f | Train Acc : %.3f | Val Loss : %.3f | Val Acc : %.3f | '
-                  'Test Loss : %.3f | Test Acc : %.3f'
+            print('EPOCH : %03d | Train Loss : %.4f | Train Acc : %.4f | Val Loss : %.4f | Val Acc : %.4f | '
+                  'Test Loss : %.4f | Test Acc : %.4f'
                 % (epoch, train_loss, train_acc, val_loss, val_acc, test_loss, test_acc))
 
-            compare_acc = val_acc - val_loss / poer_weight if opt.poer else val_acc - val_loss
+            compare_acc = val_acc - val_loss
             if compare_acc >= opt.best_acc and epoch > opt.min_epoch:
                 opt.best_acc = compare_acc
-                model_name = 'epoch_%d_val_%.3f_test_%.3f.pth' % (epoch, val_acc, test_acc)
+                model_name = 'epoch_%d_val_%.4f_test_%.4f.pth' % (epoch, val_acc, test_acc)
                 os.makedirs(opt.save_path, exist_ok=True)
                 torch.save(model.module.state_dict(), '%s/%s' % (opt.save_path, model_name))
 
@@ -152,18 +152,19 @@ if __name__ == '__main__':
 
     parser.add_argument('--epoch', type=int, default=3000)
     parser.add_argument('--batch_size', type=int, default=128)
-    parser.add_argument('--lr', type=float, default=1e-4)
+    parser.add_argument('--lr', type=float, default=6e-4)
     parser.add_argument('--depth', type=int, default=18)
-    parser.add_argument('--size', type=int, default=224)
-    parser.add_argument('--num_classes', type=int, default=7)
+    parser.add_argument('--num_classes', type=int, default=5)
+    parser.add_argument('--num_prototypes', type=int, default=5)
     parser.add_argument('--poer', type=bool, default=True)
+    parser.add_argument('--pretrained', type=bool, default=True)
     parser.add_argument('--poer_set', type=int, default=70)
     parser.add_argument('--min_epoch', type=int, default=10)
     parser.add_argument('--best_acc', type=float, default=-10)
-    parser.add_argument('--source', type=list, default=['photo', 'art_painting', 'cartoon'])
-    parser.add_argument('--target', type=list, default=['sketch'])
-    parser.add_argument('--logdir', type=str, default='./tensorboard/res18_poer/sketch/res18_224_run0')
-    parser.add_argument('--save_path', type=str, default='./saved_models/res18_poer/sketch/res18_224_run0')
+    parser.add_argument('--source', type=list, default=['CALTECH', 'LABELME', 'PASCAL'])
+    parser.add_argument('--target', type=list, default=['SUN'])
+    parser.add_argument('--logdir', type=str, default='./tensorboard/res18_poer/VLCS/SUN/res18_224_run0')
+    parser.add_argument('--save_path', type=str, default='./saved_models/res18_poer/VLCS/SUN/res18_224_run0')
     parser.add_argument('--checkpoint', type=str, default=None)
 
     opt = parser.parse_args()
@@ -171,9 +172,9 @@ if __name__ == '__main__':
         print('opt:', opt)
     
     # data augmentation
-    train_transform, val_transform = get_transform(size=opt.size)
+    train_transform, val_transform = get_transform()
     main(opt)
 
 
 # using following script to train the model
-# python -m torch.distributed.launch --nproc_per_node=8 train.py --n_gpus=8
+# python -m torch.distributed.launch --nproc_per_node=8 vlcs_train.py --n_gpus=8
