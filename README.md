@@ -3,7 +3,7 @@
 
 <img src="https://github.com/ForeverPs/PoER/raw/master/data/framework.jpg" width="1000px"/>
 
-Official PyTorch Implementation
+Official PyTorch Implementation, [Paper](https://arxiv.org/abs/2207.12194)
 > Sen Pei, Jiaxi Sun
 > <br/> Institute of Automation, Chinese Academy of Sciences
 
@@ -43,3 +43,16 @@ Official PyTorch Implementation
 - [Deeper, Broader and Artier Domain Generalization](https://openaccess.thecvf.com/content_iccv_2017/html/Li_Deeper_Broader_and_ICCV_2017_paper.html) (ICCV, 2017)
 - [Robust classification with convolutional prototype learning](https://openaccess.thecvf.com/content_cvpr_2018/html/Yang_Robust_Classification_With_CVPR_2018_paper.html) (CVPR, 2018)
 - [Domain Generalization via Entropy Regularization](https://proceedings.neurips.cc/paper/2020/hash/b98249b38337c5088bbc660d8f872d6a-Abstract.html) (NeurIPS, 2020)
+
+## Citation
+
+```
+@misc{pei2022domain,
+      title={Domain Decorrelation with Potential Energy Ranking}, 
+      author={Sen Pei and Jiaxi Sun and Shiming Ciang and Gaofeng Meng},
+      year={2022},
+      eprint={2207.12194},
+      archivePrefix={arXiv},
+      primaryClass={cs.CV}
+}
+```
