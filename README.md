@@ -1,5 +1,5 @@
 # Domain Decorrelation with Potential Energy Ranking
-- submitted to `AAAI 2023`, [arXiv preprint](https://arxiv.org/abs/2207.12194)
+- submitted to `AAAI 2023`, [arXiv Preprint](https://arxiv.org/abs/2207.12194)
 
 <img src="https://github.com/ForeverPs/PoER/raw/master/data/framework.jpg" width="1000px"/>
 
