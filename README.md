@@ -49,7 +49,7 @@ Official PyTorch Implementation
 ```
 @misc{pei2022domain,
       title={Domain Decorrelation with Potential Energy Ranking}, 
-      author={Sen Pei and Jiaxi Sun and Shiming Ciang and Gaofeng Meng},
+      author={Sen Pei and Jiaxi Sun and Shiming Xiang and Gaofeng Meng},
       year={2022},
       eprint={2207.12194},
       archivePrefix={arXiv},
