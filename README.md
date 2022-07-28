@@ -4,8 +4,8 @@
 <img src="https://github.com/ForeverPs/PoER/raw/master/data/framework.jpg" width="1000px"/>
 
 Official PyTorch Implementation
-> Sen Pei, Jiaxi Sun
-> <br/> Institute of Automation, Chinese Academy of Sciences
+<!-- > Sen Pei, Jiaxi Sun -->
+<!-- > <br/> Institute of Automation, Chinese Academy of Sciences -->
 
 ## Datasets
 - PACS: photo, art painting, cartoon, sketch
