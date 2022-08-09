@@ -1,7 +1,7 @@
 # Domain Decorrelation with Potential Energy Ranking
 - [arXiv Preprint](https://arxiv.org/abs/2207.12194)
 
-<img src="https://github.com/ForeverPs/PoER/raw/master/data/framework.jpg" width="1000px"/>
+<img src="https://github.com/ForeverPs/PoER/raw/master/data/pipeline.jpg" width="1000px"/>
 
 Official PyTorch Implementation
 <!-- > Sen Pei, Jiaxi Sun -->
