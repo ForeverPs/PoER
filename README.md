@@ -1,5 +1,5 @@
 # Domain Decorrelation with Potential Energy Ranking
-[![NICO](https://img.shields.io/badge/2022%20ECCV%20Workshop-Jury%20Award-FFD500?style=flat&labelColor=005BBB)]([https://opensource.fb.com/support-ukraine](https://codalab.lisn.upsaclay.fr/competitions/4083))
+[![NICO](https://img.shields.io/badge/2022%20ECCV%20Workshop-Jury%20Award-FFD500?style=flat&labelColor=005BBB)](https://codalab.lisn.upsaclay.fr/competitions/4083)
 
 - [arXiv Preprint](https://arxiv.org/abs/2207.12194)
 
