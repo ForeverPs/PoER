@@ -48,6 +48,7 @@ Official PyTorch Implementation
 - [Domain Generalization via Entropy Regularization](https://proceedings.neurips.cc/paper/2020/hash/b98249b38337c5088bbc660d8f872d6a-Abstract.html) (NeurIPS, 2020)
 
 ## Citation
+- Under Review
 <!-- >
 ```
 @misc{pei2022domain,
