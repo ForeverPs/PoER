@@ -1,14 +1,15 @@
 # Domain Decorrelation with Potential Energy Ranking
 [![NICO](https://img.shields.io/badge/2022%20ECCV%20Workshop-Jury%20Award-FFD500?style=flat&labelColor=005BBB)](https://codalab.lisn.upsaclay.fr/competitions/4083)
 
-- [Main Conference Under Review]()
-<!-- > (https://arxiv.org/abs/2207.12194) -->
+[![NICO](https://img.shields.io/badge/2023%20AAAI%20-Main%20Track-FFD500?style=flat&labelColor=005BBB)](https://codalab.lisn.upsaclay.fr/competitions/4083)
+
+- [Accepted as AAAI 2023](https://arxiv.org/abs/2207.12194)
 
 <img src="https://github.com/ForeverPs/PoER/raw/master/data/pipeline.jpg" width="1000px"/>
 
 Official PyTorch Implementation
-<!-- > Sen Pei, Jiaxi Sun -->
-<!-- > <br/> Institute of Automation, Chinese Academy of Sciences -->
+> Sen Pei, Jiaxi Sun
+> <br/> Institute of Automation, Chinese Academy of Sciences
 
 ## Datasets
 - PACS: photo, art painting, cartoon, sketch
@@ -48,16 +49,14 @@ Official PyTorch Implementation
 - [Domain Generalization via Entropy Regularization](https://proceedings.neurips.cc/paper/2020/hash/b98249b38337c5088bbc660d8f872d6a-Abstract.html) (NeurIPS, 2020)
 
 ## Citation
-- Under Review
-<!-- >
+>
 ```
 @misc{pei2022domain,
       title={Domain Decorrelation with Potential Energy Ranking}, 
-      author={Sen Pei and Jiaxi Sun and Shiming Xiang and Gaofeng Meng},
+      author={Sen Pei and Jiaxi Sun and Yida Xu and and Shiming Xiang and Gaofeng Meng},
       year={2022},
       eprint={2207.12194},
       archivePrefix={arXiv},
       primaryClass={cs.CV}
 }
 ```
--->
