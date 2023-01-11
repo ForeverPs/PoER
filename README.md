@@ -56,7 +56,7 @@ Official PyTorch Implementation
 | EISNet | 81.89 | 76.44 | 95.93 | 74.33 | 82.15 |
 | L2A-OT | 83.30 | 78.20 | 96.20 | 73.60 | 82.83 |
 | MixStyle | 84.10 | 78.80 | 96.10 | 75.90 | 83.70 |
-| PoER | 85.30 | 77.69 | 96.42 | 77.30 | 84.18 |
+| PoER (Ours) | 85.30 | 77.69 | 96.42 | 77.30 | 84.18 |
 
 ## Reference
 - [Deep Residual Learning for Image Recognition](https://openaccess.thecvf.com/content_cvpr_2016/papers/He_Deep_Residual_Learning_CVPR_2016_paper.pdf) (CVPR, 2016)
