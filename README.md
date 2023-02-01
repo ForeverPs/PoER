@@ -3,7 +3,7 @@
 
 [![NICO](https://img.shields.io/badge/2023%20AAAI%20-Main%20Track-FFD500?style=flat&labelColor=005BBB)](https://codalab.lisn.upsaclay.fr/competitions/4083)
 
-- [Accepted as AAAI 2023](https://arxiv.org/abs/2207.12194)
+- [Accepted by AAAI 2023](https://arxiv.org/abs/2207.12194)
 
 <img src="https://github.com/ForeverPs/PoER/raw/master/data/pipeline.jpg" width="1000px"/>
 
